@@ -1,4 +1,4 @@
-import { h, t, icon, GET, store, can, relTime, catName, clear, fmtDateTime } from '../lib.js';
+import { h, t, icon, GET, store, can, relTime, catName, clear, fmtDateTime, todayStr } from '../lib.js';
 import { publishNow } from '../app.js';
 import { resolvePlaylist, localParts } from '/shared/schedule.js';
 
@@ -52,7 +52,7 @@ export default async function dashboard(root) {
 }
 
 function upcomingEvents(cats) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayStr();
   const out = [];
   for (const c of cats) {
     if (!c.active || c.isDefault) continue;
@@ -64,7 +64,7 @@ function upcomingEvents(cats) {
       } else if (r.type === 'dateRange' && r.startDate && (r.endDate || r.startDate) >= today) out.push({ cat: c, date: r.startDate });
       else if (r.type === 'dates') { const d = (r.dates || []).filter(x => x >= today).sort()[0]; if (d) out.push({ cat: c, date: d }); }
       else if (r.type === 'yearly' && r.month && r.day) {
-        const y = new Date().getFullYear();
+        const y = Number(today.slice(0, 4));
         let d = `${y}-${String(r.month).padStart(2, '0')}-${String(r.day).padStart(2, '0')}`;
         if (d < today) d = `${y + 1}${d.slice(4)}`;
         out.push({ cat: c, date: d });
