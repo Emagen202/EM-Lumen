@@ -1,5 +1,6 @@
 // Admin UI core helpers: DOM builder, API client, i18n, modals, toasts, icons, formatting.
 import { DICT } from './i18n.js';
+import { localParts } from '/shared/schedule.js';
 
 // ---------------- i18n ----------------
 export let lang = localStorage.getItem('emtv.lang') || 'he';
@@ -254,6 +255,7 @@ export function copyText(text) {
   });
 }
 export const pad2 = (n) => String(n).padStart(2, '0');
-export const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; };
+/** Today's date (YYYY-MM-DD) in the system's configured time zone. */
+export const todayStr = () => localParts(new Date(), store.meta?.settings?.timezone || 'Asia/Jerusalem').date;
 export const minToHHMM = (m) => `${pad2(Math.floor(m / 60))}:${pad2(m % 60)}`;
 export const changed = () => emit({ type: 'changed' });
