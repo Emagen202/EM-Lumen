@@ -140,7 +140,8 @@ async function verifyIdToken(idToken, nonce) {
 }
 
 const redirectUri = () => `${config.baseUrl}/auth/callback`;
-const safeNext = (n) => (typeof n === 'string' && n.startsWith('/') && !n.startsWith('//') ? n : '/admin/');
+// Only same-site paths. Browsers treat "/\\host" like "//host", so backslashes and control characters are rejected too.
+const safeNext = (n) => (typeof n === 'string' && /^\/(?![/\\])/.test(n) && !/[\\\u0000-\u001f]/.test(n) ? n : '/admin/');
 
 export async function oidcLogin(req, res, url) {
   if (!config.oidcEnabled) return redirect(res, '/login?error=sso_disabled');
@@ -200,8 +201,8 @@ export async function localLogin(req, res) {
   const ip = clientIp(req);
   const a = attempts.get(ip) || { n: 0, t: Date.now() };
   if (Date.now() - a.t > 15 * 60e3) { a.n = 0; a.t = Date.now(); }
-  if (a.n >= 8) return redirect(res, '/login?error=rate');
   const isJson = (req.headers['content-type'] || '').includes('json');
+  if (a.n >= 8) return isJson ? send(res, 429, { error: 'rate' }) : redirect(res, '/login?error=rate');
   const body = isJson ? await readJson(req) : await readForm(req);
   const eq = (x, y) => crypto.timingSafeEqual(crypto.createHash('sha256').update(String(x)).digest(), crypto.createHash('sha256').update(String(y)).digest());
   const okUser = eq(body.username || '', config.localAdmin.user);
