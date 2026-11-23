@@ -1,0 +1,100 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "npm install",
+  "buildCommand": "npm run vercel-build",
+  "outputDirectory": "public",
+  "regions": [
+    "fra1"
+  ],
+  "functions": {
+    "api/index.js": {
+      "maxDuration": 60,
+      "includeFiles": "package.json"
+    }
+  },
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/admin/",
+      "permanent": false
+    },
+    {
+      "source": "/admin",
+      "destination": "/admin/",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/player/:key((?!index\\.html$|player\\.js$|player\\.css$|sw\\.js$)[^/]+)",
+      "destination": "/player/index.html"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "/api/index?__p=/api/:path*"
+    },
+    {
+      "source": "/auth/:path*",
+      "destination": "/api/index?__p=/auth/:path*"
+    },
+    {
+      "source": "/login",
+      "destination": "/api/index?__p=/login"
+    },
+    {
+      "source": "/healthz",
+      "destination": "/api/index?__p=/healthz"
+    },
+    {
+      "source": "/media/:path*",
+      "destination": "/api/index?__p=/media/:path*"
+    },
+    {
+      "source": "/favicon.ico",
+      "destination": "/admin/img/icon.svg"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "same-origin"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; img-src 'self' data: blob: https://*.public.blob.vercel-storage.com; media-src 'self' blob: https://*.public.blob.vercel-storage.com; style-src 'self' 'unsafe-inline'; font-src 'self' data: https://*.public.blob.vercel-storage.com; script-src 'self'; connect-src 'self' https://*.public.blob.vercel-storage.com https://*.blob.vercel-storage.com https://blob.vercel-storage.com https://vercel.com; frame-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self' https://login.microsoftonline.com"
+        }
+      ]
+    },
+    {
+      "source": "/player/sw.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/housekeeping",
+      "schedule": "17 3 * * *"
+    }
+  ]
+}

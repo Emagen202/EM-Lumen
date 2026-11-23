@@ -1,0 +1,11 @@
+# Caddy reverse proxy with automatic HTTPS.
+# Replace the host name with the fixed address of the system.
+lumen.example.com {
+	encode gzip
+	reverse_proxy 127.0.0.1:8080 {
+		flush_interval -1        # required for live updates (Server-Sent Events)
+	}
+	request_body {
+		max_size 1GB             # large video uploads
+	}
+}

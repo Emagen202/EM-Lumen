@@ -1,0 +1,25 @@
+{
+  "name": "em-lumen",
+  "version": "1.1.0",
+  "description": "Eitan Medical lobby digital signage — player + management system (on-prem or Vercel)",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning server/index.js",
+    "dev": "node --disable-warning=ExperimentalWarning --watch server/index.js",
+    "backup": "node --disable-warning=ExperimentalWarning -e \"import('./server/db.js').then(async m => { await m.initDb(); const b = await import('./server/backup.js'); console.log(b.runBackup('manual')); })\"",
+    "check": "node --disable-warning=ExperimentalWarning server/selftest.js",
+    "vercel-build": "node scripts/vercel-build.mjs"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.0.0",
+    "@vercel/blob": "^2.0.0"
+  },
+  "devDependencies": {
+    "esbuild": ">=0.24.0 <1.0.0"
+  },
+  "license": "UNLICENSED"
+}

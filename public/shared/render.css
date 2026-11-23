@@ -1,0 +1,58 @@
+/* Shared slide styles — player, editor, thumbnails */
+.emtv-stage { position: relative; overflow: hidden; background: #000; transform-origin: 0 0; contain: strict; user-select: none; -webkit-user-select: none; }
+.emtv-stage .bg-media { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.emtv-stage .bg-overlay { position: absolute; inset: 0; pointer-events: none; }
+.emtv-stage .el { position: absolute; box-sizing: border-box; overflow: hidden; }
+.emtv-stage .el > img, .emtv-stage .el > video { display: block; width: 100%; height: 100%; }
+.emtv-stage .el .txt { white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; width: 100%; }
+.emtv-stage .el .shape { position: absolute; inset: 0; }
+.emtv-stage .el-clock .txt, .emtv-stage .el-countdown .txt { white-space: nowrap; }
+.emtv-stage .ph { width: 100%; height: 100%; display: grid; place-items: center; font: 600 32px "Segoe UI", Arial, sans-serif; color: rgba(255,255,255,.7);
+  background: repeating-linear-gradient(45deg, rgba(255,255,255,.08) 0 20px, rgba(255,255,255,.14) 20px 40px); border: 3px dashed rgba(255,255,255,.4); box-sizing: border-box; }
+
+/* Ticker */
+.emtv-stage .ticker-track { display: flex; white-space: nowrap; will-change: transform; position: absolute; top: 50%; translate: 0 -50%; left: 0; }
+.emtv-stage .ticker-item { white-space: pre; flex: none; }
+.emtv-stage .ticker-track.run-ltr { animation: emtv-tick-ltr var(--tick-dur, 30s) linear infinite; }
+.emtv-stage .ticker-track.run-rtl { animation: emtv-tick-rtl var(--tick-dur, 30s) linear infinite; flex-direction: row-reverse; left: auto; right: 0; }
+@keyframes emtv-tick-ltr { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes emtv-tick-rtl { from { transform: translateX(0); } to { transform: translateX(50%); } }
+
+/* Ken Burns */
+.emtv-stage.playing .kb { animation: emtv-kb var(--slide-dur, 15s) ease-in-out both; }
+@keyframes emtv-kb { from { transform: scale(1) translate(0, 0); } to { transform: scale(1.14) translate(-2%, -1.5%); } }
+
+/* Element entrance animations */
+.emtv-stage .el[data-anim] { animation-duration: var(--ad, 900ms); animation-delay: var(--adelay, 0ms); animation-fill-mode: both; animation-timing-function: cubic-bezier(.2,.7,.2,1); animation-play-state: paused; }
+.emtv-stage.playing .el[data-anim] { animation-play-state: running; }
+.emtv-stage .el[data-anim="fade"] { animation-name: emtv-a-fade; }
+.emtv-stage .el[data-anim="slide-up"] { animation-name: emtv-a-up; }
+.emtv-stage .el[data-anim="slide-down"] { animation-name: emtv-a-down; }
+.emtv-stage .el[data-anim="slide-left"] { animation-name: emtv-a-left; }
+.emtv-stage .el[data-anim="slide-right"] { animation-name: emtv-a-right; }
+.emtv-stage .el[data-anim="zoom"] { animation-name: emtv-a-zoom; }
+.emtv-stage .el[data-anim="pop"] { animation-name: emtv-a-pop; animation-timing-function: cubic-bezier(.3,1.6,.5,1); }
+.emtv-stage .el[data-anim="blur"] { animation-name: emtv-a-blur; }
+.emtv-stage .el[data-anim="typewriter"] { animation-name: emtv-a-type; animation-timing-function: steps(30, end); }
+@keyframes emtv-a-fade { from { opacity: 0; } }
+@keyframes emtv-a-up { from { opacity: 0; translate: 0 80px; } }
+@keyframes emtv-a-down { from { opacity: 0; translate: 0 -80px; } }
+@keyframes emtv-a-left { from { opacity: 0; translate: 120px 0; } }
+@keyframes emtv-a-right { from { opacity: 0; translate: -120px 0; } }
+@keyframes emtv-a-zoom { from { opacity: 0; scale: .6; } }
+@keyframes emtv-a-pop { from { opacity: 0; scale: .3; } }
+@keyframes emtv-a-blur { from { opacity: 0; filter: blur(24px); } }
+@keyframes emtv-a-type { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+
+/* Alert overlays (player) */
+.emtv-alert { position: absolute; z-index: 50; font-family: "Segoe UI", Arial, sans-serif; color: #fff; display: flex; align-items: center; justify-content: center; text-align: center; box-sizing: border-box; }
+.emtv-alert.banner { left: 0; right: 0; bottom: 0; min-height: 13%; padding: 1.6% 4%; font-size: 4.2vh; font-weight: 600; flex-direction: column; gap: .2em; line-height: 1.3; }
+.emtv-alert.fullscreen { inset: 0; padding: 6%; font-size: 7vh; font-weight: 700; flex-direction: column; gap: 3vh; line-height: 1.25; }
+.emtv-alert.ticker { left: 0; right: 0; bottom: 0; height: 9%; font-size: 4.5vh; font-weight: 600; overflow: hidden; justify-content: flex-start; }
+.emtv-alert.info { background: rgba(10, 110, 189, .94); }
+.emtv-alert.warning { background: rgba(214, 120, 0, .95); }
+.emtv-alert.emergency { background: rgba(185, 20, 30, .97); }
+.emtv-alert.fullscreen.emergency { animation: emtv-pulse 2s ease-in-out infinite; }
+@keyframes emtv-pulse { 50% { background: rgba(130, 10, 20, .97); } }
+.emtv-alert .alert-en { font-size: .75em; opacity: .9; direction: ltr; }
+.emtv-alert .alert-track { display: inline-flex; white-space: nowrap; animation: emtv-tick-rtl 30s linear infinite; }
