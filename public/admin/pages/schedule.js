@@ -49,7 +49,7 @@ export default async function schedulePage(root) {
       pl.slides.length ? h('table.t', h('tbody', pl.slides.map((s, i) => h('tr', h('td.muted', String(i + 1)), h('td', h('a', { href: `#/editor/${s.id}` }, s.name)), h('td.small.muted', catName(catById[s.categoryId])), h('td.small', s.useVideoLength ? t('slide.videoLength') : `${s.duration || store.meta.settings.defaultDuration} ${t('sec')}`))))) : h('div.empty', t('sched.nothing')));
   }
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayStr();
   const holidayRows = [];
   for (const c of manifest.categories) for (const r of c.rules || []) {
     if (r.type !== 'holiday' || r.exclude) continue;
