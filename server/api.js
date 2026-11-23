@@ -20,6 +20,14 @@ const str = (v, max = 500) => (v == null ? '' : String(v)).slice(0, max);
 const int = (v, d = 0) => (Number.isFinite(Number(v)) ? Math.trunc(Number(v)) : d);
 const bool = (v) => (v ? 1 : 0);
 const jsonStr = (v, d) => JSON.stringify(v ?? d);
+const color = (v, d) => (typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v.trim()) ? v.trim().toLowerCase() : d);
+const idList = (v) => (Array.isArray(v) ? [...new Set(v.map(Number).filter(n => Number.isInteger(n) && n > 0))] : []);
+const validTz = (tz) => { try { new Intl.DateTimeFormat('en-US', { timeZone: tz }); return true; } catch { return false; } };
+async function categoryExists(id) { return !!(await db.get('SELECT id FROM categories WHERE id = ?', id)); }
+async function clampDuration(v) {
+  const minD = Number(await getSetting('minDuration')) || 1;
+  return Math.max(minD, Math.min(3600, Number(v) || Number(await getSetting('defaultDuration')) || 15));
+}
 
 // ------------------------------------------------------------------ SSE hub (on-prem only; on Vercel players poll)
 const playerStreams = new Map(); // screenId -> Set<res>
@@ -195,7 +203,9 @@ export function registerApi(r) {
     const s = await screenByKey(params.key);
     const body = await readJson(req);
     const status = JSON.stringify(body).length < 20000 ? body : {};
-    await db.run('UPDATE screens SET last_seen = ?, last_ip = ?, status = ?, command = NULL WHERE id = ?', now(), clientIp(req), JSON.stringify(status), s.id);
+    // Clear only the command that is delivered in this response; one queued meanwhile is kept for the next heartbeat.
+    await db.run('UPDATE screens SET last_seen = ?, last_ip = ?, status = ?, command = CASE WHEN command = ? THEN NULL ELSE command END WHERE id = ?',
+      now(), clientIp(req), JSON.stringify(status), s.command || null, s.id);
     json(res, { ok: true, command: s.command || null, serverTime: now() });
   });
 
@@ -233,7 +243,7 @@ export function registerApi(r) {
     const u = await editor(req); const b = await readJson(req);
     const sort = ((await db.get('SELECT MAX(sort) m FROM categories'))?.m || 0) + 1;
     const id = await db.insert('INSERT INTO categories (name_he, name_en, color, mode, priority, is_default, active, rules, screens, sort, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
-      [str(b.name_he || 'קטגוריה חדשה', 100), str(b.name_en, 100), str(b.color || '#0a6ebd', 20), b.mode === 'replace' ? 'replace' : 'merge', int(b.priority, 10), 0, 1, jsonStr(cleanRules(b.rules), []), jsonStr(b.screens, []), sort, now(), now()]);
+      [str(b.name_he || 'קטגוריה חדשה', 100), str(b.name_en, 100), color(b.color, '#0a6ebd'), b.mode === 'replace' ? 'replace' : 'merge', int(b.priority, 10), 0, 1, jsonStr(cleanRules(b.rules), []), jsonStr(idList(b.screens), []), sort, now(), now()]);
     await audit(u.email, 'category.create', { id, name: b.name_he });
     await markDirty();
     json(res, rowToCategory(await db.get('SELECT * FROM categories WHERE id = ?', id)), 201);
@@ -246,10 +256,10 @@ export function registerApi(r) {
     if (b.isDefault) stmts.push(['UPDATE categories SET is_default = 0', []]);
     stmts.push(['UPDATE categories SET name_he=?, name_en=?, color=?, mode=?, priority=?, is_default=?, active=?, rules=?, screens=?, updated_at=? WHERE id=?', [
       b.name_he != null ? str(b.name_he, 100) : c.name_he, b.name_en != null ? str(b.name_en, 100) : c.name_en,
-      b.color != null ? str(b.color, 20) : c.color, b.mode != null ? (b.mode === 'replace' ? 'replace' : 'merge') : c.mode,
+      b.color != null ? color(b.color, c.color) : c.color, b.mode != null ? (b.mode === 'replace' ? 'replace' : 'merge') : c.mode,
       b.priority != null ? int(b.priority) : c.priority, b.isDefault != null ? bool(b.isDefault) : c.is_default,
       b.active != null ? bool(b.active) : c.active, b.rules != null ? jsonStr(cleanRules(b.rules)) : c.rules,
-      b.screens != null ? jsonStr((Array.isArray(b.screens) ? b.screens : []).map(Number)) : c.screens, now(), id]]);
+      b.screens != null ? jsonStr(idList(b.screens)) : c.screens, now(), id]]);
     await db.batch(stmts);
     await audit(u.email, 'category.update', { id, name: b.name_he || c.name_he });
     await markDirty();
@@ -290,7 +300,7 @@ export function registerApi(r) {
     const cat = await db.get('SELECT id FROM categories WHERE id = ?', int(b.categoryId));
     if (!cat) throw new HttpError(400, 'Invalid category');
     const sort = ((await db.get('SELECT MAX(sort) m FROM slides WHERE category_id = ?', cat.id))?.m ?? -1) + 1;
-    const dur = Number(b.duration) || (await getSetting('defaultDuration')) || 15;
+    const dur = await clampDuration(b.duration);
     const id = await db.insert('INSERT INTO slides (category_id, sort, name, enabled, duration, use_video_length, transition, background, elements, schedule, created_at, updated_at, updated_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',
       [cat.id, sort, str(b.name || 'שקופית חדשה', 120), 1, dur, bool(b.useVideoLength), jsonStr(cleanTransition(b.transition), {}), jsonStr(b.background, {}), jsonStr(cleanElements(b.elements), []), jsonStr(cleanSchedule(b.schedule), {}), now(), now(), u.email]);
     await audit(u.email, 'slide.create', { id, name: b.name });
@@ -301,10 +311,15 @@ export function registerApi(r) {
     const u = await editor(req); const b = await readJson(req); const id = int(params.id);
     const s = await db.get('SELECT * FROM slides WHERE id = ?', id);
     if (!s) throw new HttpError(404, 'Not found');
-    const minD = Number(await getSetting('minDuration')) || 1;
-    await db.run('UPDATE slides SET category_id=?, name=?, enabled=?, duration=?, use_video_length=?, transition=?, background=?, elements=?, schedule=?, updated_at=?, updated_by=? WHERE id=?',
-      b.categoryId != null ? int(b.categoryId) : s.category_id, b.name != null ? str(b.name, 120) : s.name,
-      b.enabled != null ? bool(b.enabled) : s.enabled, b.duration != null ? Math.max(minD, Math.min(3600, Number(b.duration) || 15)) : s.duration,
+    const catId = b.categoryId != null ? int(b.categoryId) : s.category_id;
+    let sort = s.sort;
+    if (catId !== s.category_id) {
+      if (!(await categoryExists(catId))) throw new HttpError(400, 'Invalid category');
+      sort = ((await db.get('SELECT MAX(sort) m FROM slides WHERE category_id = ?', catId))?.m ?? -1) + 1; // moved slides go to the end
+    }
+    await db.run('UPDATE slides SET category_id=?, sort=?, name=?, enabled=?, duration=?, use_video_length=?, transition=?, background=?, elements=?, schedule=?, updated_at=?, updated_by=? WHERE id=?',
+      catId, sort, b.name != null ? str(b.name, 120) : s.name,
+      b.enabled != null ? bool(b.enabled) : s.enabled, b.duration != null ? await clampDuration(b.duration) : s.duration,
       b.useVideoLength != null ? bool(b.useVideoLength) : s.use_video_length, b.transition != null ? jsonStr(cleanTransition(b.transition)) : s.transition,
       b.background != null ? jsonStr(b.background) : s.background, b.elements != null ? jsonStr(cleanElements(b.elements)) : s.elements,
       b.schedule != null ? jsonStr(cleanSchedule(b.schedule)) : s.schedule, now(), u.email, id);
@@ -326,6 +341,7 @@ export function registerApi(r) {
     if (!s) throw new HttpError(404, 'Not found');
     const catId = b.categoryId ? int(b.categoryId) : s.category_id;
     const same = catId === s.category_id;
+    if (!same && !(await categoryExists(catId))) throw new HttpError(400, 'Invalid category');
     if (same) await db.run('UPDATE slides SET sort = sort + 1 WHERE category_id = ? AND sort > ?', catId, s.sort);
     const sort = same ? s.sort + 1 : ((await db.get('SELECT MAX(sort) m FROM slides WHERE category_id = ?', catId))?.m ?? -1) + 1;
     const id = await db.insert('INSERT INTO slides (category_id, sort, name, enabled, duration, use_video_length, transition, background, elements, schedule, created_at, updated_at, updated_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',
@@ -441,6 +457,7 @@ export function registerApi(r) {
     const u = await admin(req); const id = int(params.id);
     await db.run('UPDATE screens SET key = ? WHERE id = ?', newScreenKey(), id);
     for (const res2 of playerStreams.get(id) || []) { try { res2.end(); } catch {} }
+    playerStreams.delete(id);
     await audit(u.email, 'screen.rekey', { id });
     json(res, screenOut(await db.get('SELECT * FROM screens WHERE id = ?', id), HB()));
   });
@@ -502,6 +519,13 @@ export function registerApi(r) {
       if (k === 'canvas') v = { width: Math.max(320, Math.min(7680, int(v?.width, 1920))), height: Math.max(320, Math.min(7680, int(v?.height, 1080))) };
       if (k === 'defaultTransition') v = { type: 'fade', duration: 1200, ...cleanTransition(v) };
       if (k === 'pollSeconds') v = Math.max(15, Math.min(3600, int(v, 60)));
+      if (k === 'timezone' && (typeof v !== 'string' || !validTz(v))) throw new HttpError(400, 'Invalid time zone');
+      if (k === 'dailyReload') v = typeof v === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(v) ? v : '';
+      if (k === 'defaultLang') v = v === 'en' ? 'en' : 'he';
+      if (k === 'orgName') v = str(v, 100);
+      if (k === 'idleBackground') v = typeof v === 'string' && /^(#[0-9a-f]{3,8}|rgba?\([\d\s.,%]+\))$/i.test(v.trim()) ? v.trim() : DEFAULT_SETTINGS.idleBackground;
+      if (k === 'idleLogoAssetId') v = int(v) > 0 ? int(v) : null;
+      if (k === 'showStatusDot' || k === 'allowAudio') v = !!v;
       stmts.push(setSettingStmt(k, v));
     }
     await db.batch(stmts);
