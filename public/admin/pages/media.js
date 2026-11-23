@@ -42,7 +42,7 @@ export default async function mediaPage(root) {
       const actions = can('editor') ? [
         h('button.btn.ghost.icon.sm', { title: t('rename'), onclick: async () => { const n = await promptDlg(t('rename'), a.name); if (n && n !== a.name) { await PATCH(`/api/assets/${a.id}`, { name: n }); load(); } } }, icon('edit')),
         a.kind !== 'font' ? h('button.btn.ghost.icon.sm', { title: a.kind === 'logo' ? t('media.toMedia') : t('media.toLogos'), onclick: async () => { await PATCH(`/api/assets/${a.id}`, { kind: a.kind === 'logo' ? 'media' : 'logo' }); toast(t('media.movedOk'), 'ok'); load(); } }, icon(a.kind === 'logo' ? 'image' : 'logo')) : null,
-        h('button.btn.ghost.icon.sm', { title: t('media.copyUrl'), onclick: () => copyText(location.origin + a.url) }, icon('link')),
+        h('button.btn.ghost.icon.sm', { title: t('media.copyUrl'), onclick: () => copyText(new URL(a.url, location.origin).href) }, icon('link')),
         h('span.sp'),
         h('button.btn.ghost.icon.sm', { title: t('delete'), onclick: async () => {
           const usage = await GET(`/api/assets/${a.id}/usage`);
