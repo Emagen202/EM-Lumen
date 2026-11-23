@@ -1,4 +1,4 @@
-import { h, t, icon, lang, GET, uploadFile, modal, toast, fmtSize, clear, uid, store, catName } from './lib.js';
+import { h, t, icon, lang, GET, uploadFile, modal, toast, fmtSize, clear, uid, store, catName, todayStr } from './lib.js';
 import { renderSlide, layoutStage } from '/shared/render.js';
 
 // ---------------- Small inputs ----------------
@@ -125,7 +125,7 @@ function ruleCard(r, changed, remove, rerender) {
       }
       case 'holiday': {
         const opts = (store.meta?.holidays || []).map(x => [x.key, lang === 'he' ? x.he : x.en]);
-        const next = (store.meta?.holidayDates?.[r.holiday] || []).find(o => o.start >= new Date().toISOString().slice(0, 10));
+        const next = (store.meta?.holidayDates?.[r.holiday] || []).find(o => o.start >= todayStr());
         body.append(
           h('label.f', h('span', t('rule.holiday')), selectEl(r.holiday, opts, (v) => { set('holiday', v); build(); })),
           h('label.chk', h('input', { type: 'checkbox', checked: !!r.fromEve, onchange: (e) => { set('fromEve', e.target.checked); } }), t('rule.fromEveLong')),
@@ -158,7 +158,8 @@ function ruleCard(r, changed, remove, rerender) {
 export function readMediaMeta(file) {
   return new Promise((resolve) => {
     const url = URL.createObjectURL(file);
-    const done = (m) => { URL.revokeObjectURL(url); resolve(m); };
+    let finished = false, timer = null;
+    const done = (m) => { if (finished) return; finished = true; clearTimeout(timer); URL.revokeObjectURL(url); resolve(m); };
     if (file.type.startsWith('image/')) {
       const img = new Image(); img.onload = () => done({ width: img.naturalWidth, height: img.naturalHeight }); img.onerror = () => done({}); img.src = url;
     } else if (file.type.startsWith('video/')) {
@@ -166,7 +167,7 @@ export function readMediaMeta(file) {
       v.onloadedmetadata = () => done({ width: v.videoWidth, height: v.videoHeight, duration: v.duration });
       v.onerror = () => done({}); v.src = url;
     } else done({});
-    setTimeout(() => done({}), 15000);
+    timer = setTimeout(() => done({}), 15000);
   });
 }
 
