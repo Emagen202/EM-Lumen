@@ -270,7 +270,13 @@ async function advance() {
   clearTimeout(state.timer);
   try {
     const pl = playlist();
-    if (!pl.slides.length) { showIdle(); state.timer = setTimeout(advance, 10000); return; }
+    if (!pl.slides.length) {
+      showIdle();
+      // Keep the stall watchdog informed, otherwise an idle screen counts as "stalled" and reloads every ~2 minutes.
+      state.lastAdvance = Date.now(); state.expectedNext = Date.now() + 10000;
+      state.timer = setTimeout(advance, 10000);
+      return;
+    }
     const slide = pickNext(pl.slides);
     const sameSingle = pl.slides.length === 1 && state.current && state.current.slide.id === slide.id && state.current.version === state.manifest.version && !state.idle;
     const seconds = slideSeconds(slide);
