@@ -5,7 +5,7 @@ import { renderSlide, transitionKeyframes, EASING, installFonts, layoutStage, se
 import { resolvePlaylist, localParts, makeParts, slideDuration, slideTransition } from '/shared/schedule.js';
 import { greetingSlide } from '/shared/greetings.js';
 
-const PLAYER_VERSION = '1.0.0';
+const PLAYER_VERSION = '1.2.0';
 const MEDIA_CACHE = 'emtv-media-v1';
 const qs = new URLSearchParams(location.search);
 const PREVIEW = qs.get('preview') === '1';
@@ -392,10 +392,15 @@ function showSystem(kind) {
 function hideSystem() { clearInterval(sysTimer); $('sys')?.remove(); }
 
 // ------------------------------------------------------------------ Alerts
+let alertSignature = '';
 function renderAlert() {
-  overlay.textContent = '';
   const a = state.manifest?.alert;
-  if (!a?.active || (a.until && a.until < now().getTime())) return;
+  const active = a?.active && (!a.until || a.until > now().getTime());
+  const signature = active ? JSON.stringify([a.style, a.level, a.text_he, a.text_en]) : '';
+  if (signature === alertSignature) return;
+  alertSignature = signature;
+  overlay.textContent = '';
+  if (!active) return;
   const box = document.createElement('div');
   box.className = `emtv-alert ${a.style || 'banner'} ${a.level || 'info'}`;
   const he = document.createElement('span'); he.textContent = a.text_he || ''; he.dir = 'rtl';
@@ -403,13 +408,18 @@ function renderAlert() {
   if (a.style === 'ticker') {
     const track = document.createElement('div'); track.className = 'alert-track';
     const t = [a.text_he, a.text_en].filter(Boolean).join('   •   ');
-    track.textContent = Array(6).fill(t).join('      •      ');
+    for (let i = 0; i < 2; i++) {
+      const item = document.createElement('span'); item.className = 'alert-item'; item.dir = 'auto';
+      item.textContent = Array(4).fill(t).join('   •   ') + '   •   '; track.appendChild(item);
+    }
     box.appendChild(track);
   } else {
     box.appendChild(he);
     if (a.text_en) box.appendChild(en);
   }
   overlay.appendChild(box);
+  const track = box.querySelector('.alert-track');
+  if (track) track.style.setProperty('--tick-dur', `${Math.max(10, track.firstElementChild.offsetWidth / 100)}s`);
 }
 
 // ------------------------------------------------------------------ Heartbeat, live updates, watchdogs

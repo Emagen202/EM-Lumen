@@ -17,7 +17,7 @@ const ROUTES = [
 
 const NAV = [
   ['dashboard', '#/', 'dashboard'], ['categories', '#/categories', 'layers'], ['media', '#/media', 'image'], ['schedule', '#/schedule', 'calendar'],
-  ['screens', '#/screens', 'monitor'], ['alert', '#/alert', 'alert'], ['publish', '#/publish', 'send'], null,
+  ['screens', '#/screens', 'monitor'], ['alert', '#/alert', 'ticker'], ['publish', '#/publish', 'send'], null,
   ['users', '#/users', 'users', 'admin'], ['settings', '#/settings', 'settings'], ['audit', '#/audit', 'history', 'admin'],
 ];
 
@@ -37,13 +37,14 @@ function layout() {
   els.title = h('h1');
   els.pub = h('div.pubbar');
   const initial = (store.me.name || store.me.email || '?').trim().charAt(0).toUpperCase();
-  const top = h('header.top', els.title, h('div.sp'), els.pub,
+  const menu = h('button.btn.ghost.icon.mobile-menu', { title: t('nav.menu'), 'aria-label': t('nav.menu'), 'aria-expanded': 'false', onclick: () => { const open = app.querySelector('.shell').classList.toggle('menu-open'); menu.setAttribute('aria-expanded', String(open)); } }, icon('list'));
+  const top = h('header.top', menu, els.title, h('div.sp'),
     h('button.btn.ghost.sm', { title: 'Language', onclick: switchLang }, icon('globe'), lang === 'he' ? 'English' : 'עברית'),
     h('div.usermenu', h('div.avatar', { title: `${store.me.email} · ${t('role.' + store.me.role)}` }, initial),
       h('div.small', h('div', { style: { fontWeight: 600 } }, store.me.name), h('div.muted', t('role.' + store.me.role))),
       h('a.btn.ghost.icon', { href: '/auth/logout', title: t('logout') }, icon('logout'))));
   els.main = h('main.main');
-  app.appendChild(h('div.shell', side, top, els.main));
+  app.appendChild(h('div.shell', side, top, els.main, els.pub));
   renderPubBar();
 }
 
@@ -80,6 +81,8 @@ export async function publishNow() {
 }
 
 async function route(force = false) {
+  document.querySelector('.shell')?.classList.remove('menu-open');
+  document.querySelector('.mobile-menu')?.setAttribute('aria-expanded', 'false');
   const path = location.hash.replace(/^#/, '') || '/';
   const r = ROUTES.find(x => x.re.test(path)) || ROUTES[0];
   if (r.role && !can(r.role)) { location.hash = '#/'; return; }

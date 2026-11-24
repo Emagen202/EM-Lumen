@@ -1,5 +1,5 @@
 import { h, t, icon, GET, POST, PATCH, DEL, store, can, catName, clear, toast, confirmDlg, modal, changed } from '../lib.js';
-import { switchEl, ruleEditor, colorField, selectEl, fluidThumb, assetsMap, previewModal, templates, slideThumb } from '../components.js';
+import { uploadMany, fileInput, switchEl, ruleEditor, colorField, selectEl, fluidThumb, assetsMap, previewModal, templates, slideThumb } from '../components.js';
 import { rulesMatch, localParts, slideDuration } from '/shared/schedule.js';
 
 export default async function categoryPage(root, [idStr], { setTitle }) {
@@ -14,6 +14,20 @@ export default async function categoryPage(root, [idStr], { setTitle }) {
   setTitle(catName(cat));
   let tab = sessionStorage.getItem('emtv.catTab') || 'slides';
 
+  const progress = h('div');
+  let uploading = false;
+  const uploadInput = fileInput('image/*', true, async (files) => {
+    if (uploading || !can('editor')) return;
+    uploading = true;
+    try {
+      const created = await uploadMany(files.filter(f => f.type.startsWith('image/')), 'media', progress);
+      for (const a of created) {
+        await POST('/api/slides', { categoryId: id, name: a.name, duration: settings.defaultDuration,
+          background: { type: 'image', assetId: a.id, fit: 'contain', color: '#101820' }, elements: [] });
+      }
+      if (created.length) { assets = await GET('/api/assets'); amap = assetsMap(assets); changed(); await reloadSlides(); }
+    } finally { uploading = false; }
+  });
   const head = h('div.page-head');
   const tabs = h('div.tabs');
   const body = h('div');
@@ -26,7 +40,8 @@ export default async function categoryPage(root, [idStr], { setTitle }) {
       h('div', h('h2', catName(cat)), h('p', cat.isDefault ? t('cat.defaultHint') : cat.mode === 'replace' ? t('cat.modeReplaceLong') : t('cat.modeMergeLong'))),
       h('span.sp'),
       h('button.btn', { onclick: () => previewModal(`category=${id}`, catName(cat)) }, icon('play'), t('cat.preview')),
-      can('editor') ? h('button.btn.primary', { onclick: () => newSlide() }, icon('plus'), t('slide.new')) : null);
+      can('editor') ? h('button.btn.primary', { onclick: () => uploadInput.click() }, icon('upload'), t('slide.upload')) : null,
+      can('editor') ? h('button.btn', { onclick: () => newSlide() }, icon('plus'), t('slide.new')) : null);
   };
   const renderTabs = () => {
     clear(tabs);
@@ -58,6 +73,7 @@ export default async function categoryPage(root, [idStr], { setTitle }) {
             can('editor') ? [
               h('button.btn.ghost.icon.sm', { title: t('edit'), onclick: () => { location.hash = `#/editor/${s.id}`; } }, icon('edit')),
               h('button.btn.ghost.icon.sm', { title: t('slide.duplicateMove'), onclick: () => duplicateDlg(s) }, icon('copy')),
+              ...[-1, 1].map(delta => h('button.btn.ghost.icon.sm', { title: t(delta < 0 ? 'slide.earlier' : 'slide.later'), disabled: i + delta < 0 || i + delta >= slides.length, onclick: async () => { const ids = slides.map(x => x.id); [ids[i], ids[i + delta]] = [ids[i + delta], ids[i]]; await POST('/api/slides/reorder', { ids }); changed(); reloadSlides(); } }, icon(delta < 0 ? 'back' : 'fwd'))),
               h('span.sp'),
               h('button.btn.ghost.icon.sm', { title: t('delete'), onclick: async () => {
                 if (!await confirmDlg(t('slide.deleteConfirm', { name: s.name }))) return;
@@ -152,5 +168,5 @@ export default async function categoryPage(root, [idStr], { setTitle }) {
 
   const renderBody = () => { clear(body); tab === 'settings' ? renderSettings() : renderSlides(); };
   renderHead(); renderTabs(); renderBody();
-  root.append(head, tabs, body);
+  root.append(head, h('p.hint', t('slide.uploadHint')), uploadInput, progress, tabs, body);
 }

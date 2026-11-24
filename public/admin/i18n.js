@@ -10,7 +10,7 @@ const he = {
   'role.viewer': 'צופה', 'role.editor': 'עורך', 'role.admin': 'מנהל',
   // nav
   'nav.dashboard': 'לוח בקרה', 'nav.categories': 'קטגוריות ושקופיות', 'nav.editor': 'עורך שקופית', 'nav.media': 'מאגר מדיה ולוגואים', 'nav.schedule': 'לוח זמנים',
-  'nav.screens': 'מסכים', 'nav.alert': 'הודעת חירום', 'nav.publish': 'פרסום וגרסאות', 'nav.users': 'משתמשים', 'nav.settings': 'הגדרות', 'nav.audit': 'יומן פעילות',
+  'nav.screens': 'מסכים', 'nav.alert': 'הודעות רצות', 'nav.publish': 'פרסום וגרסאות', 'nav.users': 'משתמשים', 'nav.settings': 'הגדרות', 'nav.audit': 'יומן פעילות',
   // publish
   'pub.dirty': 'יש שינויים שלא פורסמו', 'pub.clean': 'הכול מפורסם · v{v}', 'pub.publish': 'פרסום למסכים', 'pub.notePrompt': 'פרסום התוכן למסכים',
   'pub.notePh': 'הערה (לא חובה), למשל: עדכון מבצע חודשי', 'pub.done': 'פורסם בהצלחה (גרסה {v}). המסכים יתעדכנו תוך שניות.', 'pub.allLive': 'כל השינויים מוצגים במסכים',
@@ -108,7 +108,7 @@ const he = {
   'screens.kioskHint': 'מורידים את קובץ ההתקנה של המסך (הכפתור בכרטיס המסך), מעתיקים אותו למחשב של המסך ולוחצים עליו פעמיים. הקובץ מבקש הרשאות מנהל, מתקין את עצמו, פותח את התצוגה מיד ומפעיל אותה אוטומטית בכל הפעלה של המחשב. אם הדפדפן נסגר או נתקע, הוא נפתח מחדש. אם Windows מציג אזהרה, לוחצים "מידע נוסף" ואז "הפעל בכל זאת". מומלץ להגדיר במחשב כניסה אוטומטית למשתמש (netplwiz).',
   'screens.kioskManual': 'הפעלה ידנית, בלי התקנה:',
   // alert
-  'alert.sub': 'הודעה דחופה שמופיעה מעל התוכן בכל המסכים באופן מיידי, בלי צורך בפרסום.', 'alert.compose': 'הודעה', 'alert.textHe': 'טקסט בעברית', 'alert.textEn': 'טקסט באנגלית (לא חובה)',
+  'alert.sub': 'עדכונים והודעות מעל התוכן במסכים. שומרים ומציגים, ללא צורך בפרסום.', 'alert.compose': 'הודעה', 'alert.textHe': 'טקסט בעברית', 'alert.textEn': 'טקסט באנגלית (לא חובה)',
   'alert.style': 'תצוגה', 'alert.s.banner': 'פס בתחתית המסך', 'alert.s.ticker': 'טקסט רץ', 'alert.s.fullscreen': 'מסך מלא', 'alert.level': 'רמה', 'alert.l.info': 'מידע (כחול)',
   'alert.l.warning': 'אזהרה (כתום)', 'alert.l.emergency': 'חירום (אדום)', 'alert.duration': 'משך', 'alert.d.none': 'עד לכיבוי ידני', 'alert.d.15m': '15 דקות', 'alert.d.1h': 'שעה',
   'alert.d.4h': '4 שעות', 'alert.d.eod': 'עד סוף היום', 'alert.d.custom': 'עד מועד מסוים', 'alert.on': 'הפעלה עכשיו', 'alert.off': 'כיבוי', 'alert.isActive': 'ההודעה מוצגת כעת',
@@ -149,7 +149,7 @@ const en = {
   'err.network': 'Cannot reach the server', 'err.generic': 'Error', 'err.forbidden': 'You are not allowed to do this',
   'role.viewer': 'Viewer', 'role.editor': 'Editor', 'role.admin': 'Admin',
   'nav.dashboard': 'Dashboard', 'nav.categories': 'Categories & slides', 'nav.editor': 'Slide editor', 'nav.media': 'Media & logos', 'nav.schedule': 'Schedule',
-  'nav.screens': 'Screens', 'nav.alert': 'Emergency message', 'nav.publish': 'Publish & versions', 'nav.users': 'Users', 'nav.settings': 'Settings', 'nav.audit': 'Activity log',
+  'nav.screens': 'Screens', 'nav.alert': 'Running messages', 'nav.publish': 'Publish & versions', 'nav.users': 'Users', 'nav.settings': 'Settings', 'nav.audit': 'Activity log',
   'pub.dirty': 'Unpublished changes', 'pub.clean': 'All published · v{v}', 'pub.publish': 'Publish to screens', 'pub.notePrompt': 'Publish content to screens',
   'pub.notePh': 'Note (optional), e.g. monthly promo update', 'pub.done': 'Published (version {v}). Screens update within seconds.', 'pub.allLive': 'All changes are live on screens',
   'pub.current': 'Current version', 'pub.lastChange': 'Last change', 'pub.version': 'Version', 'pub.when': 'When', 'pub.by': 'By', 'pub.note': 'Note', 'pub.live': 'Live',
@@ -236,7 +236,7 @@ const en = {
   'screens.player': 'Player version', 'screens.errors': 'Recent errors', 'screens.kioskTitle': 'Run a screen in kiosk mode (Windows)',
   'screens.kioskHint': 'Download the screen installer (button on the screen card), copy it to the screen PC and double-click it. It asks for administrator rights, installs itself, opens the display right away and starts it automatically every time the PC starts. If the browser closes or freezes, it is reopened. If Windows shows a warning, click "More info" and then "Run anyway". Enabling automatic sign-in for the user (netplwiz) is recommended.',
   'screens.kioskManual': 'Manual start, without installing:',
-  'alert.sub': 'An urgent message shown over the content on all screens immediately, without publishing.', 'alert.compose': 'Message', 'alert.textHe': 'Hebrew text', 'alert.textEn': 'English text (optional)',
+  'alert.sub': 'Updates and announcements across your screens. Save to display without publishing.', 'alert.compose': 'Message', 'alert.textHe': 'Hebrew text', 'alert.textEn': 'English text (optional)',
   'alert.style': 'Display', 'alert.s.banner': 'Bottom banner', 'alert.s.ticker': 'Scrolling ticker', 'alert.s.fullscreen': 'Full screen', 'alert.level': 'Level', 'alert.l.info': 'Info (blue)',
   'alert.l.warning': 'Warning (orange)', 'alert.l.emergency': 'Emergency (red)', 'alert.duration': 'Duration', 'alert.d.none': 'Until turned off', 'alert.d.15m': '15 minutes', 'alert.d.1h': '1 hour',
   'alert.d.4h': '4 hours', 'alert.d.eod': 'Until end of day', 'alert.d.custom': 'Until a specific time', 'alert.on': 'Activate now', 'alert.off': 'Turn off', 'alert.isActive': 'The message is showing now',
@@ -266,3 +266,25 @@ const en = {
 };
 
 export const DICT = { he, en };
+
+Object.assign(DICT.he, {
+ 'screens.installHint': 'מורידים את הקובץ למחשב המסך ומפעילים בלחיצה כפולה. כתובת המסך כבר בפנים.',
+ 'screens.download': 'הורדת מתקין למסך', 'slide.upload': 'תמונות לשקופיות',
+ 'media.folder': 'קטגוריית מדיה', 'media.allFolders': 'כל הקטגוריות', 'media.newFolder': 'קטגוריה חדשה',
+ 'media.folderName': 'שם הקטגוריה', 'media.uncategorized': 'ללא קטגוריה', 'media.createSlide': 'הוספה כשקופית',
+ 'media.selectCategory': 'באיזו קטגוריה להציג?', 'media.addedSlide': 'השקופית נוספה. ניתן לערוך ולפרסם.',
+ 'slide.uploadHint': 'העלו תמונות והן יהפכו לשקופיות. גררו לשינוי הסדר, או פתחו בעורך להתאמות.',
+ 'slide.earlier': 'הזזה לפני', 'slide.later': 'הזזה אחרי'
+});
+Object.assign(DICT.en, {
+ 'screens.installHint': 'Download to the screen computer and double-click. The screen address is already included.',
+ 'screens.download': 'Download screen installer', 'slide.upload': 'Images to slides',
+ 'media.folder': 'Media category', 'media.allFolders': 'All categories', 'media.newFolder': 'New category',
+ 'media.folderName': 'Category name', 'media.uncategorized': 'Uncategorized', 'media.createSlide': 'Add as slide',
+ 'media.selectCategory': 'Choose a slide category', 'media.addedSlide': 'Slide added. Ready to edit and publish.',
+ 'slide.uploadHint': 'Upload images to create slides. Drag to reorder, or open the editor to customize.',
+ 'slide.earlier': 'Move earlier', 'slide.later': 'Move later'
+});
+
+DICT.he['nav.menu'] = 'תפריט ניווט';
+DICT.en['nav.menu'] = 'Navigation menu';

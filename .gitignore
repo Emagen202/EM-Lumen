@@ -5,3 +5,7 @@ data/
 deploy/windows/nssm.exe
 public/admin/vendor/
 .vercel
+
+__pycache__/
+data-holiday-sources.json
+.taste-skill/

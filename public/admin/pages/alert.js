@@ -3,7 +3,7 @@ import { selectEl, switchEl } from '../components.js';
 
 export default async function alertPage(root) {
   let a = await GET('/api/alert');
-  const d = { ...a, durationPreset: a.until ? 'custom' : 'none', customUntil: a.until ? toLocal(a.until) : '' };
+  const d = { ...a, style: a.active ? a.style : 'ticker', durationPreset: a.until ? 'custom' : 'none', customUntil: a.until ? toLocal(a.until) : '' };
   const ro = !can('editor');
   const preview = h('div.alert-preview');
   const status = h('div');
@@ -11,7 +11,7 @@ export default async function alertPage(root) {
   function renderPreview() {
     clear(preview);
     const box = h('div', { class: `emtv-alert ${d.style} ${d.level}` });
-    if (d.style === 'ticker') box.appendChild(h('div.alert-track', [d.text_he, d.text_en].filter(Boolean).join('   •   ')));
+    if (d.style === 'ticker') { const text = [d.text_he, d.text_en].filter(Boolean).join('   •   ') || t('alert.samplePh'); box.appendChild(h('div.alert-track', [0, 1].map(() => h('span.alert-item', { dir: 'auto' }, Array(4).fill(text).join('   •   ') + '   •   ')))); }
     else { box.appendChild(h('span', { dir: 'rtl' }, d.text_he || t('alert.samplePh'))); if (d.text_en) box.appendChild(h('span.alert-en', { dir: 'ltr' }, d.text_en)); }
     preview.appendChild(box);
   }
@@ -51,7 +51,7 @@ export default async function alertPage(root) {
           h('label.f', h('span', t('alert.level')), selectEl(d.level, [['info', t('alert.l.info')], ['warning', t('alert.l.warning')], ['emergency', t('alert.l.emergency')]], (v) => { d.level = v; renderPreview(); }, { disabled: ro }))),
         h('label.f', h('span', t('alert.duration')), selectEl(d.durationPreset, [['none', t('alert.d.none')], ['15m', t('alert.d.15m')], ['1h', t('alert.d.1h')], ['4h', t('alert.d.4h')], ['eod', t('alert.d.eod')], ['custom', t('alert.d.custom')]], (v) => { d.durationPreset = v; customInput.style.display = v === 'custom' ? '' : 'none'; }, { disabled: ro })),
         customInput,
-        !ro ? h('div.row', h('button.btn', { onclick: () => save(false) }, icon('x'), t('alert.off')), h('span.sp'), h('button.btn.solid-danger', { onclick: () => save(true) }, icon('zap'), t('alert.on'))) : null,
+        !ro ? h('div.row', h('button.btn', { onclick: () => save(false) }, icon('x'), t('alert.off')), h('span.sp'), h('button.btn.primary', { onclick: () => save(true) }, icon('zap'), t('alert.on'))) : null,
         h('div.hint', t('alert.hint')),
         store.meta.platform?.realtime === false ? h('div.hint', t('alert.pollHint', { s: store.meta.playerSettings?.pollSeconds || 20 })) : null)),
       h('div.card', h('div.hd', h('h3', t('preview'))), h('div.bd', preview))));

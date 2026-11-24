@@ -13,8 +13,8 @@
 /* Ticker */
 .emtv-stage .ticker-track { display: flex; white-space: nowrap; will-change: transform; position: absolute; top: 50%; translate: 0 -50%; left: 0; }
 .emtv-stage .ticker-item { white-space: pre; flex: none; }
-.emtv-stage .ticker-track.run-ltr { animation: emtv-tick-ltr var(--tick-dur, 30s) linear infinite; }
-.emtv-stage .ticker-track.run-rtl { animation: emtv-tick-rtl var(--tick-dur, 30s) linear infinite; flex-direction: row-reverse; left: auto; right: 0; }
+.emtv-stage .ticker-track.run-ltr { animation: emtv-tick-rtl var(--tick-dur, 30s) linear infinite; left: auto; right: 0; }
+.emtv-stage .ticker-track.run-rtl { animation: emtv-tick-ltr var(--tick-dur, 30s) linear infinite; direction: ltr; left: 0; right: auto; }
 @keyframes emtv-tick-ltr { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @keyframes emtv-tick-rtl { from { transform: translateX(0); } to { transform: translateX(50%); } }
 
@@ -57,4 +57,6 @@
 .emtv-alert.fullscreen.emergency { animation: emtv-pulse 2s ease-in-out infinite; }
 @keyframes emtv-pulse { 50% { background: rgba(130, 10, 20, .97); } }
 .emtv-alert .alert-en { font-size: .75em; opacity: .9; direction: ltr; }
-.emtv-alert .alert-track { display: inline-flex; white-space: nowrap; animation: emtv-tick-rtl 30s linear infinite; }
+.emtv-alert .alert-track { display: flex; flex: none; width: max-content; direction: ltr; white-space: nowrap; will-change: transform; animation: emtv-tick-ltr var(--tick-dur, 30s) linear infinite; }
+.emtv-alert.ticker { direction: ltr; }
+.emtv-alert .alert-item { flex: none; white-space: pre; min-width: 100vw; }
