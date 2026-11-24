@@ -2,6 +2,8 @@
 // All evaluation happens on "local parts" in the configured time zone, so the result is identical
 // everywhere regardless of the device clock's own time zone.
 
+import { activeGreeting, greetingSlide } from './greetings.js';
+
 const pad = (n) => String(n).padStart(2, '0');
 
 /** Local date/time parts of `date` in time zone `tz`. */
@@ -147,7 +149,19 @@ export function resolvePlaylist(manifest, parts, { screenId = 0 } = {}) {
   for (const c of scheduled) if (c.mode !== 'replace' && playable(c).length) chosen.push(c);
   chosen.sort((a, b) => (a.sort - b.sort) || (a.id - b.id));
   const slides = chosen.flatMap(playable);
-  return { mode: slides.length ? 'normal' : 'idle', categories: chosen, slides };
+  // Holiday mode: add the matching "happy holiday" slide to the regular rotation (never during a replace override).
+  const g = holidayGreetingFor(manifest, parts);
+  if (g) slides.push(g);
+  return { mode: slides.length ? 'normal' : 'idle', categories: chosen, slides, greeting: g?._greeting || null };
+}
+
+/** The holiday greeting slide due at `parts`, when holiday mode is on. */
+export function holidayGreetingFor(manifest, parts) {
+  const s = manifest.settings || {};
+  const hg = s.holidayGreetings;
+  if (!hg?.enabled) return null;
+  const key = activeGreeting(manifest.holidays || {}, parts.date, hg.daysBefore ?? 3);
+  return key ? greetingSlide(key, { duration: hg.duration }) : null;
 }
 
 /** Activity of each category across a day (for the admin timeline), sampled every `step` minutes. */

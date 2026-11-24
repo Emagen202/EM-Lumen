@@ -11,6 +11,7 @@ import { buildManifest, publish, playerManifest, rowToAsset, rowToCategory, rowT
 import { holidayList, holidaysForManifest } from './holidays.js';
 import { isBlob, isBlobUrl, deleteMedia, handleBlobUpload } from './storage.js';
 import { log } from './log.js';
+import { kioskInstaller, kioskInstallerFilename } from './kiosk.js';
 
 const viewer = requireRole('viewer');
 const editor = requireRole('editor');
@@ -23,6 +24,9 @@ const jsonStr = (v, d) => JSON.stringify(v ?? d);
 const color = (v, d) => (typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v.trim()) ? v.trim().toLowerCase() : d);
 const idList = (v) => (Array.isArray(v) ? [...new Set(v.map(Number).filter(n => Number.isInteger(n) && n > 0))] : []);
 const validTz = (tz) => { try { new Intl.DateTimeFormat('en-US', { timeZone: tz }); return true; } catch { return false; } };
+function cleanHolidayGreetings(v) {
+  return { enabled: !!v?.enabled, daysBefore: Math.max(0, Math.min(14, int(v?.daysBefore, 3))), duration: Math.max(5, Math.min(120, int(v?.duration, 12))), logoAssetId: int(v?.logoAssetId) > 0 ? int(v.logoAssetId) : null };
+}
 async function categoryExists(id) { return !!(await db.get('SELECT id FROM categories WHERE id = ?', id)); }
 async function clampDuration(v) {
   const minD = Number(await getSetting('minDuration')) || 1;
@@ -453,13 +457,15 @@ export function registerApi(r) {
     await audit(u.email, 'screen.reload', { id });
     json(res, { ok: true });
   });
-  r.post('/api/screens/:id/rekey', async (req, res, { params }) => {
-    const u = await admin(req); const id = int(params.id);
-    await db.run('UPDATE screens SET key = ? WHERE id = ?', newScreenKey(), id);
-    for (const res2 of playerStreams.get(id) || []) { try { res2.end(); } catch {} }
-    playerStreams.delete(id);
-    await audit(u.email, 'screen.rekey', { id });
-    json(res, screenOut(await db.get('SELECT * FROM screens WHERE id = ?', id), HB()));
+  // Screen addresses are permanent (no re-keying), so an installed kiosk never needs to be updated.
+  // One-file Windows installer with this screen's address baked in.
+  r.get('/api/screens/:id/kiosk-installer', async (req, res, { params }) => {
+    const u = await editor(req);
+    const s = await db.get('SELECT * FROM screens WHERE id = ?', int(params.id));
+    if (!s) throw new HttpError(404, 'Not found');
+    const body = kioskInstaller({ playerUrl: `${config.baseUrl}/player/${s.key}`, statusUrl: `${config.baseUrl}/api/player/${s.key}/status`, screenName: s.name });
+    await audit(u.email, 'screen.kiosk-installer', { id: s.id });
+    send(res, 200, body, { 'Content-Type': 'application/octet-stream', 'Content-Disposition': `attachment; filename="${kioskInstallerFilename(s)}"` });
   });
 
   // ---------- Publishing ----------
@@ -505,6 +511,16 @@ export function registerApi(r) {
     json(res, alert);
   });
 
+  // ---------- Holiday mode (editors may toggle it from the schedule page) ----------
+  r.put('/api/holiday-greetings', async (req, res) => {
+    const u = await editor(req); const b = await readJson(req);
+    const v = cleanHolidayGreetings(b);
+    await setSetting('holidayGreetings', v);
+    await audit(u.email, v.enabled ? 'holidays.on' : 'holidays.off', v);
+    notifyPlayers('update', { settings: true });
+    json(res, v);
+  });
+
   // ---------- Settings ----------
   r.get('/api/settings', async (req, res) => { await viewer(req); json(res, await getAllSettings()); });
   r.put('/api/settings', async (req, res) => {
@@ -526,6 +542,7 @@ export function registerApi(r) {
       if (k === 'idleBackground') v = typeof v === 'string' && /^(#[0-9a-f]{3,8}|rgba?\([\d\s.,%]+\))$/i.test(v.trim()) ? v.trim() : DEFAULT_SETTINGS.idleBackground;
       if (k === 'idleLogoAssetId') v = int(v) > 0 ? int(v) : null;
       if (k === 'showStatusDot' || k === 'allowAudio') v = !!v;
+      if (k === 'holidayGreetings') v = cleanHolidayGreetings(v);
       stmts.push(setSettingStmt(k, v));
     }
     await db.batch(stmts);

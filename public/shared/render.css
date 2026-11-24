@@ -43,6 +43,8 @@
 @keyframes emtv-a-pop { from { opacity: 0; scale: .3; } }
 @keyframes emtv-a-blur { from { opacity: 0; filter: blur(24px); } }
 @keyframes emtv-a-type { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+.emtv-stage .el[data-anim="float"] { animation-name: emtv-a-float; animation-iteration-count: infinite; animation-direction: alternate; animation-timing-function: ease-in-out; animation-fill-mode: none; }
+@keyframes emtv-a-float { from { translate: 0 0; scale: 1; } to { translate: 0 -40px; scale: 1.06; } }
 
 /* Alert overlays (player) */
 .emtv-alert { position: absolute; z-index: 50; font-family: "Segoe UI", Arial, sans-serif; color: #fff; display: flex; align-items: center; justify-content: center; text-align: center; box-sizing: border-box; }

@@ -1,5 +1,6 @@
 // Self-test for the schedule engine and holiday calendar: `npm run check`
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import { resolvePlaylist, makeParts, rulesMatch, ruleMatches, localParts } from '../public/shared/schedule.js';
 import { computeHolidays } from './holidays.js';
 
@@ -67,4 +68,22 @@ ok('merge category at lunch', () => assert.deepEqual(ids('2026-12-01', '12:30'),
 ok('memorial replaces everything, highest priority wins', () => assert.deepEqual(ids('2027-05-11', '10:00'), [21]));
 ok('lower-priority replace after memorial ends', () => assert.deepEqual(ids('2027-05-11', '21:00'), [41]));
 ok('time zone parts', () => { const p = localParts(new Date('2026-07-01T21:30:00Z'), 'Asia/Jerusalem'); assert.equal(p.date, '2026-07-02'); assert.equal(p.minutes, 30); });
+
+// Holiday mode
+const { activeGreeting, greetingSlide, GREETING_KEYS } = await import('../public/shared/greetings.js');
+ok('greeting due 3 days before Hanukkah 2026 and during it', () => {
+  const start = H.hanukkah.find(o => o.start.startsWith('2026')).start; // 2026-12-05
+  assert.equal(activeGreeting(H, '2026-12-01', 3), null);
+  assert.equal(activeGreeting(H, '2026-12-02', 3), 'hanukkah');
+  assert.equal(activeGreeting(H, '2026-12-12', 3), 'hanukkah');
+  assert.equal(activeGreeting(H, '2026-12-13', 3), null);
+});
+ok('no greeting on Memorial Day', () => assert.equal(activeGreeting({ yom_hazikaron: H.yom_hazikaron }, '2027-05-11', 3), null));
+ok('every holiday renders a slide', () => GREETING_KEYS.forEach(k => { const s = greetingSlide(k); assert.ok(s.elements.length === 0 && s._assets['holiday-art'].url === `/shared/greetings/${k}.svg` && fs.existsSync(new URL(`../public/shared/greetings/${k}.svg`, import.meta.url))); }));
+ok('holiday mode appends the greeting to the playlist', () => {
+  const m = { ...manifest, settings: { holidayGreetings: { enabled: true, daysBefore: 3 } } };
+  const r = resolvePlaylist(m, P('2026-12-07', '09:00'));
+  assert.equal(r.slides.at(-1).id, 'holiday-hanukkah');
+  assert.equal(resolvePlaylist(manifest, P('2026-12-07', '09:00')).slides.some(s => s._greeting), false);
+});
 console.log(`\nAll ${n} checks passed.`);

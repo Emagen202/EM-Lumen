@@ -196,6 +196,7 @@ export const DEFAULT_SETTINGS = {
   idleBackground: '#0b2545',
   pollSeconds: config.realtime ? 60 : 20,
   alert: { active: false, text_he: '', text_en: '', style: 'banner', level: 'info', until: null, updated_at: 0 },
+  holidayGreetings: { enabled: false, daysBefore: 3, duration: 12, logoAssetId: null },
 };
 
 export async function getSetting(key) {

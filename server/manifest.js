@@ -1,4 +1,6 @@
-import { db, getAllSettings, getSetting } from './db.js';
+import { db, getAllSettings, getSetting, DEFAULT_SETTINGS } from './db.js';
+
+const DEFAULT_HG = DEFAULT_SETTINGS.holidayGreetings;
 import { holidaysForManifest } from './holidays.js';
 import { assetUrl } from './storage.js';
 import { config } from './config.js';
@@ -38,7 +40,10 @@ export async function playerSettings(all) {
     const a = await db.get('SELECT * FROM assets WHERE id = ?', Number(s.idleLogoAssetId));
     if (a) idleLogo = assetUrl(a);
   }
+  // Holiday mode (the Eitan Medical logo is drawn into each greeting artwork).
+  const hg = { ...DEFAULT_HG, ...(s.holidayGreetings || {}) };
   return {
+    holidayGreetings: { enabled: !!hg.enabled, daysBefore: hg.daysBefore, duration: hg.duration },
     orgName: s.orgName, timezone: s.timezone, canvas: s.canvas, defaultTransition: s.defaultTransition,
     defaultDuration: s.defaultDuration, minDuration: s.minDuration, dailyReload: s.dailyReload,
     showStatusDot: s.showStatusDot, allowAudio: s.allowAudio, idleLogo, idleBackground: s.idleBackground,

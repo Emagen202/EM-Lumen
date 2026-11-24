@@ -19,14 +19,14 @@ export default async function screensPage(root) {
           can('editor') ? h('button.btn.sm', { onclick: async () => { await POST(`/api/screens/${s.id}/reload`); toast(t('screens.reloadSent'), 'ok'); } }, icon('refresh'), t('screens.reload')) : null,
           can('admin') ? [
             h('button.btn.ghost.icon.sm', { title: t('rename'), onclick: async () => { const n = await promptDlg(t('rename'), s.name); if (n) { await PATCH(`/api/screens/${s.id}`, { name: n }); load(); } } }, icon('edit')),
-            h('button.btn.ghost.icon.sm', { title: t('screens.rekey'), onclick: async () => { if (await confirmDlg(t('screens.rekeyConfirm'))) { await POST(`/api/screens/${s.id}/rekey`); load(); } } }, icon('shield')),
             h('button.btn.ghost.icon.sm', { title: t('delete'), onclick: async () => { if (await confirmDlg(t('screens.deleteConfirm', { name: s.name }))) { await DEL(`/api/screens/${s.id}`); load(); } } }, icon('trash')),
           ] : null),
         h('div.bd', { style: { display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: '18px' } },
           h('div.col',
             h('label.f', h('span', t('screens.url')), h('div.row', h('input', { type: 'text', value: s.url, readOnly: true, class: 'mono', onclick: (e) => e.target.select() }),
               h('button.btn.icon', { title: t('copy'), onclick: () => copyText(s.url) }, icon('copy')), h('a.btn.icon', { href: s.url, target: '_blank', title: t('openNewTab') }, icon('link')))),
-            h('div.hint', t('screens.urlHint'))),
+            h('div.hint', t('screens.urlHint')),
+            can('editor') ? h('a.btn.primary', { href: `/api/screens/${s.id}/kiosk-installer`, download: '', style: { alignSelf: 'flex-start' } }, icon('download'), t('screens.download')) : null),
           h('div.kv',
             h('span', t('screens.lastSeen2')), h('span', s.lastSeen ? relTime(s.lastSeen) : t('never')),
             h('span', t('screens.nowShowing')), h('span', st.idle ? t('dash.idle') : st.slideName ? `${st.slideName}${cat ? ` · ${catName(cat)}` : ''}` : '—'),
@@ -44,6 +44,7 @@ export default async function screensPage(root) {
     list,
     h('div.card', { style: { marginTop: '16px' } }, h('div.hd', h('h3', t('screens.kioskTitle'))), h('div.bd.col',
       h('div.hint', t('screens.kioskHint')),
+      h('div.hint', t('screens.kioskManual')),
       h('code.blk', '"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --kiosk --autoplay-policy=no-user-gesture-required --noerrdialogs --disable-session-crashed-bubble --disable-infobars --no-first-run --disable-features=Translate --overscroll-history-navigation=0 --user-data-dir=C:\\EM-Lumen\\chrome-profile "<URL>"'))));
   await load();
   const timer = setInterval(() => load().catch(() => {}), 15000);

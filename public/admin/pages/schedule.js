@@ -1,5 +1,6 @@
-import { h, t, icon, GET, store, catName, clear, todayStr, minToHHMM, lang } from '../lib.js';
-import { selectEl, previewModal } from '../components.js';
+import { h, t, icon, GET, PUT, store, can, catName, clear, toast, todayStr, minToHHMM, lang, changed } from '../lib.js';
+import { selectEl, previewModal, switchEl, pickAsset } from '../components.js';
+import { GREETINGS, GREETING_KEYS, activeGreeting } from '/shared/greetings.js';
 import { dayTimeline, resolvePlaylist, makeParts, addDaysStr, localParts } from '/shared/schedule.js';
 
 export default async function schedulePage(root) {
@@ -58,8 +59,36 @@ export default async function schedulePage(root) {
   holidayRows.sort((a, b) => a.o.start.localeCompare(b.o.start));
   const hname = (k) => { const x = store.meta.holidays.find(y => y.key === k); return x ? (lang === 'he' ? x.he : x.en) : k; };
 
+  // ---------------- Holiday mode ----------------
+  const hg = { enabled: false, daysBefore: 3, duration: 12, logoAssetId: null, ...(store.meta.settings.holidayGreetings || {}) };
+  const ro = !can('editor');
+  const nextBox = h('div.hint');
+  const updNext = () => {
+    let found = null;
+    for (let i = 0; i < 400 && !found; i++) { const d = addDaysStr(todayStr(), i); const k = activeGreeting(manifest.holidays, d, hg.daysBefore); if (k) found = { d, k }; }
+    nextBox.textContent = found ? t('hol.next', { name: GREETINGS[found.k].he, d: found.d }) : '';
+  };
+  updNext();
+  const saveHg = async () => {
+    const v = await PUT('/api/holiday-greetings', hg);
+    Object.assign(hg, v); store.meta.settings.holidayGreetings = v; changed(); toast(t('saved'), 'ok'); updNext();
+    manifest.settings = { ...(manifest.settings || {}), holidayGreetings: { ...(manifest.settings?.holidayGreetings || {}), ...v } }; render();
+  };
+  const holCard = h('div.card', { style: { marginBottom: '16px' } },
+    h('div.hd', h('h3', '🎉 ', t('hol.title')), h('span.sp'),
+      switchEl(hg.enabled, async (v) => { hg.enabled = v; await saveHg(); }, { disabled: ro }), h('b', { style: { marginInlineStart: '8px' } }, hg.enabled ? t('hol.on') : t('hol.off'))),
+    h('div.bd.col',
+      h('div.hint', t('hol.hint')),
+      h('div.row.wrap', { style: { gap: '18px' } },
+        h('label.f', { style: { maxWidth: '200px' } }, h('span', t('hol.daysBefore')), h('input', { type: 'number', min: 0, max: 14, value: hg.daysBefore, disabled: ro, onchange: (e) => { hg.daysBefore = Number(e.target.value); saveHg(); } })),
+        h('label.f', { style: { maxWidth: '200px' } }, h('span', t('hol.duration')), h('input', { type: 'number', min: 5, max: 120, value: hg.duration, disabled: ro, onchange: (e) => { hg.duration = Number(e.target.value); saveHg(); } }))),
+      nextBox,
+      h('div.small.muted', t('hol.previewAll')),
+      h('div.row.wrap', { style: { gap: '6px' } }, GREETING_KEYS.map(k => h('button.btn.sm', { style: { borderInlineStart: `4px solid ${GREETINGS[k].color}` }, onclick: () => previewModal(`greeting=${k}`, GREETINGS[k].he) }, icon('eye'), GREETINGS[k].he)))));
+
   root.append(
     h('div.page-head', h('div', h('h2', t('nav.schedule')), h('p', t('sched.sub')))),
+    holCard,
     h('div.card', { style: { marginBottom: '16px' } }, h('div.hd', h('h3', t('sched.week')), h('span.sp'),
       h('input', { type: 'date', value: date, style: { width: '170px' }, onchange: (e) => { date = e.target.value || todayStr(); render(); } }),
       screens.length > 1 ? selectEl(screenId, [[0, t('sched.allScreens')], ...screens.map(s => [s.id, s.name])], (v) => { screenId = Number(v); render(); }, { style: { width: '200px' } }) : null),

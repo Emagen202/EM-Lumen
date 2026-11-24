@@ -10,7 +10,7 @@
   "functions": {
     "api/index.js": {
       "maxDuration": 60,
-      "includeFiles": "package.json"
+      "includeFiles": "{package.json,server/kiosk-installer.template.cmd}"
     }
   },
   "redirects": [

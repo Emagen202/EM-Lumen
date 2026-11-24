@@ -5,7 +5,7 @@ import { renderSlide, renderElement, layoutStage, installFonts } from '/shared/r
 import { colorField, selectEl, segButtons, switchEl, ruleEditor, pickAsset, assetsMap, previewModal, ruleSummary } from '../components.js';
 
 const SYSTEM_FONTS = ['', 'Segoe UI', 'Arial', 'Tahoma', 'Calibri', 'David', 'Times New Roman', 'Georgia', 'Verdana', 'Courier New'];
-const ANIMS = ['none', 'fade', 'slide-up', 'slide-down', 'slide-left', 'slide-right', 'zoom', 'pop', 'blur', 'typewriter'];
+const ANIMS = ['none', 'fade', 'slide-up', 'slide-down', 'slide-left', 'slide-right', 'zoom', 'pop', 'blur', 'typewriter', 'float'];
 
 export default async function editorPage(root, [idStr], { setTitle }) {
   const id = Number(idStr);

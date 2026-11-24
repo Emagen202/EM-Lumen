@@ -3,6 +3,7 @@
 // the schedule is evaluated locally, and several watchdogs recover from any failure.
 import { renderSlide, transitionKeyframes, EASING, installFonts, layoutStage, setTimeOffset } from '/shared/render.js';
 import { resolvePlaylist, localParts, makeParts, slideDuration, slideTransition } from '/shared/schedule.js';
+import { greetingSlide } from '/shared/greetings.js';
 
 const PLAYER_VERSION = '1.0.0';
 const MEDIA_CACHE = 'emtv-media-v1';
@@ -231,6 +232,11 @@ function currentParts() {
 function playlist() {
   const m = state.manifest;
   if (!m) return { mode: 'idle', slides: [], categories: [] };
+  if (PREVIEW && qs.get('greeting')) {
+    const s = m.settings || {};
+    const g = greetingSlide(qs.get('greeting'), { duration: s.holidayGreetings?.duration });
+    return { mode: 'normal', slides: g ? [g] : [], categories: [] };
+  }
   if (PREVIEW && qs.get('slide')) {
     const s = m.slides.find(x => String(x.id) === qs.get('slide'));
     return { mode: 'normal', slides: s ? [s] : [], categories: [] };
@@ -309,7 +315,7 @@ function schedule(seconds, slide) {
 
 async function show(slide, seconds) {
   const m = state.manifest;
-  const view = renderSlide(slide, { assets: m.assets || {}, settings: m.settings || {}, mode: 'player' });
+  const view = renderSlide(slide, { assets: slide._assets ? { ...(m.assets || {}), ...slide._assets } : (m.assets || {}), settings: m.settings || {}, mode: 'player' });
   const layer = document.createElement('div');
   layer.className = 'layer';
   layer.style.opacity = '0';

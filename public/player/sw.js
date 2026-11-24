@@ -1,9 +1,10 @@
 // EM Lumen — Service Worker for the player.
 // Keeps the player shell and all media available offline; serves cached video with HTTP Range support.
-const SHELL_CACHE = 'emtv-shell-v2';
+const SHELL_CACHE = 'emtv-shell-v4';
 const MEDIA_CACHE = 'emtv-media-v1';
 const DATA_CACHE = 'emtv-data';
-const SHELL = ['/player/index.html', '/player/player.js', '/player/player.css', '/shared/render.js', '/shared/schedule.js', '/shared/render.css'];
+const SHELL = ['/player/index.html', '/player/player.js', '/player/player.css', '/shared/render.js', '/shared/schedule.js', '/shared/greetings.js', '/shared/render.css',
+  ...['rosh_hashana', 'yom_kippur', 'sukkot', 'simchat_torah', 'hanukkah', 'tu_bishvat', 'purim', 'pesach', 'yom_haatzmaut', 'lag_baomer', 'yom_yerushalayim', 'shavuot'].map(k => `/shared/greetings/${k}.svg`)];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(SHELL_CACHE).then(c => c.addAll(SHELL.map(u => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
