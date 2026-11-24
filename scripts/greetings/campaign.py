@@ -25,19 +25,18 @@ sources=json.loads(Path(sys.argv[1]).read_text(encoding='utf-8-sig'))
 for key,(line1,line2,en,font,ink,paper) in DESIGNS.items():
  data=base64.b64encode(Path(sources[key]).read_bytes()).decode()
  size=min(150, 710 / max(advance(font,line1,1),advance(font,line2,1)))
- faces=face('Headline',font,line1+line2)+face('Sub','assistant-500',en+'מאיתנו, משפחת איתן מדיקל')
+ faces=face('Headline',font,line1+line2)+face('Sub','assistant-500',en)
  svg=f'''<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
  <defs>{brand_defs()}<linearGradient id="veil"><stop offset=".42" stop-color="{paper}" stop-opacity="0"/><stop offset=".73" stop-color="{paper}" stop-opacity=".87"/><stop offset="1" stop-color="{paper}" stop-opacity=".96"/></linearGradient></defs>
  <style>{faces}</style>
  <image width="1920" height="1080" preserveAspectRatio="xMidYMid slice" href="data:image/png;base64,{data}"/>
  <path fill="url(#veil)" d="M0 0h1920v1080H0z"/>
  <g fill="{ink}" text-anchor="middle">
- {brand(1440,270,340,word=ink,cls='')}
- <path d="M1395 340h90" stroke="{ink}" stroke-width="2" opacity=".5"/>
- <text x="1440" y="510" direction="rtl" font-family="Headline" font-size="{size}">{escape(line1)}</text>
- <text x="1440" y="680" direction="rtl" font-family="Headline" font-size="{size}">{escape(line2)}</text>
- <text x="1440" y="765" font-family="Sub" font-size="26" letter-spacing="3">{en}</text>
- <text x="1440" y="925" direction="rtl" font-family="Sub" font-size="34">מאיתנו, משפחת איתן מדיקל</text>
+ {brand(1440,270,580,word=ink,cls='')}
+ <path d="M1370 405h140" stroke="{ink}" stroke-width="2" opacity=".5"/>
+ <text x="1440" y="570" direction="rtl" font-family="Headline" font-size="{size}">{escape(line1)}</text>
+ <text x="1440" y="740" direction="rtl" font-family="Headline" font-size="{size}">{escape(line2)}</text>
+ <text x="1440" y="825" font-family="Sub" font-size="26" letter-spacing="3">{en}</text>
  </g>
  </svg>'''
  (root/'public/shared/greetings'/f'{key}.svg').write_text(svg,encoding='utf-8')
