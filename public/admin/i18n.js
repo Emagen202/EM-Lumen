@@ -288,3 +288,14 @@ Object.assign(DICT.en, {
 
 DICT.he['nav.menu'] = 'תפריט ניווט';
 DICT.en['nav.menu'] = 'Navigation menu';
+
+Object.assign(DICT.he, {
+ 'cat.manual': 'הפעלה ידנית', 'cat.playNow': 'הפעל כעת', 'cat.automatic': 'חזרה לתזמון',
+ 'cat.publishReminder': 'הבחירה נשמרה. לחצו על פרסום למסכים כדי להחיל אותה.',
+ 'cat.emptyWarning': 'כיבוי הקטגוריה ישאיר לפחות מסך אחד ללא שקופיות פעילות כרגע. כדי להציג קטגוריה מחוץ לתאריך שלה, לחצו על ״הפעל כעת״ ואז פרסמו למסכים. להמשיך לכיבוי בכל זאת?'
+});
+Object.assign(DICT.en, {
+ 'cat.manual': 'Manual playback', 'cat.playNow': 'Play now', 'cat.automatic': 'Resume schedule',
+ 'cat.publishReminder': 'Selection saved. Publish to screens to apply it.',
+ 'cat.emptyWarning': 'Disabling this category will leave at least one screen without playable slides now. To play outside scheduled dates, choose Play now, then publish. Disable anyway?'
+});

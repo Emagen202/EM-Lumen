@@ -1,6 +1,6 @@
 import { h, t, icon, GET, POST, PATCH, DEL, store, can, catName, clear, toast, confirmDlg, modal, changed } from '../lib.js';
 import { switchEl, ruleSummary, colorField, selectEl } from '../components.js';
-import { rulesMatch, localParts } from '/shared/schedule.js';
+import { resolvePlaylist, rulesMatch, localParts } from '/shared/schedule.js';
 
 export default async function categoriesPage(root) {
   const list = h('div.cards');
@@ -10,11 +10,12 @@ export default async function categoriesPage(root) {
     clear(list);
     const parts = localParts(new Date(), store.meta.settings.timezone);
     cats.forEach((c, i) => {
-      const activeNow = c.active && (c.isDefault ? rulesMatch(c.rules, parts, store.meta.holidayDates) : (c.rules.length ? rulesMatch(c.rules, parts, store.meta.holidayDates) : true));
+      const activeNow = c.active && (c.manualOverride || c.isDefault ? rulesMatch(c.rules, parts, store.meta.holidayDates) : (c.rules.length ? rulesMatch(c.rules, parts, store.meta.holidayDates) : true));
       list.appendChild(h('div.card.cat-card', { style: { '--c': c.color } },
         h('div.bar'),
         h('div.body', { onclick: () => { location.hash = `#/category/${c.id}`; } },
           h('h3', catName(c),
+            c.manualOverride ? h('span.badge.warn', t('cat.manual')) : null,
             c.isDefault ? h('span.badge.brand', t('cat.default')) : null,
             h('span', { class: `badge ${c.mode === 'replace' ? 'warn' : ''}` }, c.mode === 'replace' ? t('cat.modeReplace') : t('cat.modeMerge')),
             activeNow ? h('span.badge.ok', t('cat.activeNow')) : null,
@@ -25,7 +26,19 @@ export default async function categoriesPage(root) {
           can('editor') ? [
             h('button.btn.ghost.icon.sm', { title: t('moveUp'), disabled: i === 0, onclick: () => move(cats, i, -1) }, icon('up')),
             h('button.btn.ghost.icon.sm', { title: t('moveDown'), disabled: i === cats.length - 1, onclick: () => move(cats, i, 1) }, icon('down')),
-            switchEl(c.active, async (v) => { await PATCH(`/api/categories/${c.id}`, { active: v }); changed(); load(); }),
+            h('button.btn.sm', { disabled: !c.enabledCount, onclick: async () => {
+              await PATCH(`/api/categories/${c.id}`, { active: true, manualOverride: !c.manualOverride });
+              changed(); toast(t('cat.publishReminder'), 'ok'); load();
+            } }, icon(c.manualOverride ? 'calendar' : 'play'), t(c.manualOverride ? 'cat.automatic' : 'cat.playNow')),
+            switchEl(c.active, async (v) => {
+              if (!v) {
+                const [m, screens] = await Promise.all([GET('/api/preview-manifest'), GET('/api/screens')]);
+                m.categories = m.categories.filter(x => x.id !== c.id);
+                const empty = (screens.length ? screens : [{id: 0}]).some(screen => !resolvePlaylist(m, parts, { screenId: screen.id }).slides.length);
+                if (empty && !await confirmDlg(t('cat.emptyWarning'), { danger: false })) { load(); return; }
+              }
+              await PATCH(`/api/categories/${c.id}`, { active: v }); changed(); load();
+            }),
           ] : null)));
     });
   };

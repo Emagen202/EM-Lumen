@@ -1,6 +1,6 @@
 // EM Lumen — Service Worker for the player.
 // Keeps the player shell and all media available offline; serves cached video with HTTP Range support.
-const SHELL_CACHE = 'emtv-shell-v7';
+const SHELL_CACHE = 'emtv-shell-v8';
 const MEDIA_CACHE = 'emtv-media-v1';
 const DATA_CACHE = 'emtv-data';
 const SHELL = ['/player/index.html', '/player/player.js', '/player/player.css', '/shared/render.js', '/shared/schedule.js', '/shared/greetings.js', '/shared/render.css',
@@ -92,7 +92,7 @@ self.addEventListener('fetch', (e) => {
   }
   const p = url.pathname;
   if (req.mode === 'navigate' && p.startsWith('/player/')) { e.respondWith(networkFirst(req, '/player/index.html')); return; }
-  if (SHELL.includes(p)) { e.respondWith(staleWhileRevalidate(req)); return; }
+  if (SHELL.includes(p)) { e.respondWith(networkFirst(req, p)); return; }
   if (p.startsWith('/media/')) { e.respondWith(media(req)); return; }
   if (/^\/api\/player\/[^/]+\/manifest$/.test(p)) { e.respondWith(manifest(req)); return; }
 });

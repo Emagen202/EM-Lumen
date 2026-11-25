@@ -69,6 +69,35 @@ ok('memorial replaces everything, highest priority wins', () => assert.deepEqual
 ok('lower-priority replace after memorial ends', () => assert.deepEqual(ids('2027-05-11', '21:00'), [41]));
 ok('time zone parts', () => { const p = localParts(new Date('2026-07-01T21:30:00Z'), 'Asia/Jerusalem'); assert.equal(p.date, '2026-07-02'); assert.equal(p.minutes, 30); });
 
+ok('manual memorial plays outside holiday with regular category disabled', () => {
+  const m = structuredClone(manifest);
+  m.categories.find(c => c.id === 1).active = false;
+  m.categories.find(c => c.id === 2).manualOverride = true;
+  assert.deepEqual(resolvePlaylist(m, P('2026-11-25', '09:00')).slides.map(s => s.id), [21]);
+});
+ok('manual memorial replaces regular rotation without disabling it', () => {
+  const m = structuredClone(manifest); m.categories.find(c => c.id === 2).manualOverride = true;
+  assert.deepEqual(resolvePlaylist(m, P('2026-11-25', '09:00')).slides.map(s => s.id), [21]);
+});
+ok('manual playback respects slide expiry and screen targeting', () => {
+  const m = structuredClone(manifest); const c = m.categories.find(c => c.id === 2);
+  c.manualOverride = true; c.screens = [7];
+  assert.ok(!resolvePlaylist(m, P('2026-11-25', '09:00'), {screenId: 8}).slides.some(s => s.id === 21));
+  m.slides.find(s => s.id === 21).schedule = {rules: [{type:'dateRange', endDate:'2026-11-24'}]};
+  assert.ok(!resolvePlaylist(m, P('2026-11-25', '09:00'), {screenId: 7}).slides.some(s => s.id === 21));
+});
+ok('returning to schedule restores regular content and preserves holiday rules', () => {
+  const m = structuredClone(manifest); const c = m.categories.find(c => c.id === 2);
+  c.manualOverride = false;
+  assert.deepEqual(resolvePlaylist(m, P('2026-11-25', '09:00')).slides.map(s => s.id), [11,13]);
+  assert.deepEqual(resolvePlaylist(m, P('2027-05-11', '10:00')).slides.map(s => s.id), [21]);
+});
+ok('disabled manual category never plays', () => {
+  const m = structuredClone(manifest); const c = m.categories.find(c => c.id === 2);
+  c.manualOverride = true; c.active = false;
+  assert.ok(!resolvePlaylist(m, P('2026-11-25', '09:00')).slides.some(s => s.id === 21));
+});
+
 // Holiday mode
 const { activeGreeting, greetingSlide, GREETING_KEYS } = await import('../public/shared/greetings.js');
 ok('greeting due 3 days before Hanukkah 2026 and during it', () => {

@@ -5,7 +5,7 @@ import { renderSlide, transitionKeyframes, EASING, installFonts, layoutStage, se
 import { resolvePlaylist, localParts, makeParts, slideDuration, slideTransition } from '/shared/schedule.js';
 import { greetingSlide } from '/shared/greetings.js';
 
-const PLAYER_VERSION = '1.2.0';
+const PLAYER_VERSION = '1.2.1';
 const MEDIA_CACHE = 'emtv-media-v1';
 const qs = new URLSearchParams(location.search);
 const PREVIEW = qs.get('preview') === '1';
@@ -546,7 +546,14 @@ function infoOverlay() {
 async function boot() {
   fit();
   if (!PREVIEW && 'serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/player/sw.js', { scope: '/player/' }).catch(e => logError('sw register: ' + e.message));
+    let controlled = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (controlled) reload('player update');
+      controlled = true;
+    });
+    navigator.serviceWorker.register('/player/sw.js', { scope: '/player/', updateViaCache: 'none' }).then(reg => {
+      setInterval(() => reg.update().catch(() => {}), 5 * 60e3);
+    }).catch(e => logError('sw register: ' + e.message));
     navigator.storage?.persist?.().catch(() => {});
   }
   if ('wakeLock' in navigator) {

@@ -136,6 +136,10 @@ export function resolvePlaylist(manifest, parts, { screenId = 0 } = {}) {
   for (const list of byCat.values()) list.sort((a, b) => (a.sort - b.sort) || (a.id - b.id));
   const playable = (c) => byCat.get(c.id) || [];
 
+  // Manual playback keeps slide expiry and screen targeting, but overrides category dates.
+  const manual = cats.filter(c => c.manualOverride && playable(c).length);
+  if (manual.length) return { mode: 'replace', categories: manual, slides: manual.flatMap(playable) };
+
   const scheduled = cats.filter(c => !c.isDefault && rulesMatch(c.rules, parts, holidays));
   const replace = scheduled.filter(c => c.mode === 'replace' && playable(c).length);
   if (replace.length) {

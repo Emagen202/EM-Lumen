@@ -16,7 +16,7 @@ function collectAssetIds(slide, set) {
 export function rowToCategory(r) {
   return {
     id: r.id, name_he: r.name_he, name_en: r.name_en, color: r.color, mode: r.mode, priority: r.priority,
-    isDefault: !!r.is_default, active: !!r.active, rules: parse(r.rules, []), screens: parse(r.screens, []), sort: r.sort,
+    isDefault: !!r.is_default, active: !!r.active, manualOverride: !!r.manual_override, rules: parse(r.rules, []), screens: parse(r.screens, []), sort: r.sort,
   };
 }
 

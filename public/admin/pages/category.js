@@ -39,6 +39,7 @@ export default async function categoryPage(root, [idStr], { setTitle }) {
       h('span.dot', { style: { background: cat.color, width: '14px', height: '14px' } }),
       h('div', h('h2', catName(cat)), h('p', cat.isDefault ? t('cat.defaultHint') : cat.mode === 'replace' ? t('cat.modeReplaceLong') : t('cat.modeMergeLong'))),
       h('span.sp'),
+      can('editor') ? h('button.btn', { disabled: !slides.some(s => s.enabled), onclick: async () => { cat = await PATCH(`/api/categories/${id}`, { active: true, manualOverride: !cat.manualOverride }); changed(); toast(t('cat.publishReminder'), 'ok'); renderHead(); } }, icon(cat.manualOverride ? 'calendar' : 'play'), t(cat.manualOverride ? 'cat.automatic' : 'cat.playNow')) : null,
       h('button.btn', { onclick: () => previewModal(`category=${id}`, catName(cat)) }, icon('play'), t('cat.preview')),
       can('editor') ? h('button.btn.primary', { onclick: () => uploadInput.click() }, icon('upload'), t('slide.upload')) : null,
       can('editor') ? h('button.btn', { onclick: () => newSlide() }, icon('plus'), t('slide.new')) : null);

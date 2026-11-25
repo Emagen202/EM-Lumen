@@ -7,7 +7,7 @@ import { config } from './config.js';
 import { log } from './log.js';
 
 // Columns that must come back as JS numbers (Postgres returns BIGINT / COUNT / SUM as strings).
-const NUMERIC = new Set(['id', 'user_id', 'category_id', 'sort', 'priority', 'is_default', 'active', 'enabled', 'duration', 'use_video_length',
+const NUMERIC = new Set(['id', 'user_id', 'category_id', 'sort', 'priority', 'is_default', 'manual_override', 'active', 'enabled', 'duration', 'use_video_length',
   'width', 'height', 'size', 'created_at', 'updated_at', 'expires', 'last_seen', 'last_login', 'ts', 'version', 'v', 'n', 'e', 'm']);
 function normalize(rows) {
   for (const r of rows) for (const k in r) if (NUMERIC.has(k) && typeof r[k] === 'string') r[k] = Number(r[k]);
@@ -91,6 +91,7 @@ function migrations(dialect) {
       `CREATE TABLE IF NOT EXISTS audit (id ${ID}, ts ${BIG} NOT NULL, actor TEXT, action TEXT NOT NULL, details TEXT)`,
       `CREATE INDEX IF NOT EXISTS audit_ts ON audit(ts)`,
     ],
+    [`ALTER TABLE categories ADD COLUMN ${dialect === 'postgres' ? 'IF NOT EXISTS ' : ''}manual_override INTEGER NOT NULL DEFAULT 0`],
   ];
 }
 

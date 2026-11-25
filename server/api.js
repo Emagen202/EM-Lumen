@@ -258,11 +258,11 @@ export function registerApi(r) {
     if (!c) throw new HttpError(404, 'Not found');
     const stmts = [];
     if (b.isDefault) stmts.push(['UPDATE categories SET is_default = 0', []]);
-    stmts.push(['UPDATE categories SET name_he=?, name_en=?, color=?, mode=?, priority=?, is_default=?, active=?, rules=?, screens=?, updated_at=? WHERE id=?', [
+    stmts.push(['UPDATE categories SET name_he=?, name_en=?, color=?, mode=?, priority=?, is_default=?, active=?, manual_override=?, rules=?, screens=?, updated_at=? WHERE id=?', [
       b.name_he != null ? str(b.name_he, 100) : c.name_he, b.name_en != null ? str(b.name_en, 100) : c.name_en,
       b.color != null ? color(b.color, c.color) : c.color, b.mode != null ? (b.mode === 'replace' ? 'replace' : 'merge') : c.mode,
       b.priority != null ? int(b.priority) : c.priority, b.isDefault != null ? bool(b.isDefault) : c.is_default,
-      b.active != null ? bool(b.active) : c.active, b.rules != null ? jsonStr(cleanRules(b.rules)) : c.rules,
+      b.active != null ? bool(b.active) : c.active, b.active === false ? 0 : (b.manualOverride != null ? bool(b.manualOverride) : (c.manual_override || 0)), b.rules != null ? jsonStr(cleanRules(b.rules)) : c.rules,
       b.screens != null ? jsonStr(idList(b.screens)) : c.screens, now(), id]]);
     await db.batch(stmts);
     await audit(u.email, 'category.update', { id, name: b.name_he || c.name_he });
